@@ -1,0 +1,22 @@
+FROM python:3.10-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends antiword libreoffice-writer fonts-noto-cjk \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY backend /app/backend
+COPY scripts /app/scripts
+
+RUN chmod +x /app/scripts/backend-entrypoint.sh /app/scripts/worker-entrypoint.sh
+
+WORKDIR /app/backend
+
+CMD ["/bin/sh", "/app/scripts/backend-entrypoint.sh"]
