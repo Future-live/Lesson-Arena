@@ -16,24 +16,24 @@ const navItems: Array<{ label: string; to?: string; icon: IconName }> = [
 function getToolbarCopy(pathname: string) {
   if (pathname.startsWith("/batches/")) {
     return {
-      title: "Lesson Battle Mode",
+      title: "评价详情",
       subtitle: "教案对比评价",
-      helper: "当前任务：综合评价"
+      helper: "专业维度评分"
     };
   }
 
   if (pathname === "/upload") {
     return {
-      title: "Upload Studio",
-      subtitle: "上传双教案批次",
+      title: "新建批次",
+      subtitle: "上传教案批次",
       helper: "每批次固定上传 2 份教案"
     };
   }
 
   return {
-    title: "Lesson Arena",
-    subtitle: "教案评价工作台",
-    helper: "数据看板与待评任务"
+    title: "工作台",
+    subtitle: "教案评价管理",
+    helper: "批次与评价任务"
   };
 }
 
@@ -61,7 +61,7 @@ export function AppShell({ children }: PropsWithChildren) {
   return (
     <div className="app-shell">
       <aside className="sidebar-rail" aria-label="全局导航">
-        <Link className="rail-logo" to="/" title="教案竞技场">
+        <Link className="rail-logo" to="/" title="教案评价系统">
           <InlineIcon name="fileText" />
         </Link>
 

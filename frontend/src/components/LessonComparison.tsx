@@ -1,26 +1,12 @@
 import { LessonPlanDocument } from "../api/types";
 import { InlineIcon } from "./InlineIcon";
 
-export type VoteDecision = "a_better" | "both_good" | "both_bad" | "b_better";
-
-export interface VoteOption {
-  value: VoteDecision;
-  label: string;
-}
-
 export interface LessonCardMeta {
   subject: string;
   gradeLevel: string;
   theme?: string;
   uploaderName: string;
 }
-
-export const voteOptions: VoteOption[] = [
-  { value: "a_better", label: "← 教案 A 更优" },
-  { value: "both_good", label: "≈ 二者相当" },
-  { value: "both_bad", label: "⊘ 均需改进" },
-  { value: "b_better", label: "教案 B 更优 →" }
-];
 
 function buildPdfPreviewUrl(url: string) {
   return `${url}#toolbar=1&navpanes=0&view=FitH`;
@@ -84,7 +70,7 @@ export function LessonCard({
   onToggleFocus: () => void;
 }) {
   const slotLabel = document.slot_number === 1 ? "A" : "B";
-  const previewMode = document.display_mode === "pdf" ? "PDF 原样预览" : "富文本预览";
+  const previewMode = document.display_mode === "pdf" ? "PDF 文档" : "文档内容";
 
   return (
     <article
@@ -110,17 +96,17 @@ export function LessonCard({
           </div>
 
           <div className="lesson-card-actions" aria-label={`教案 ${slotLabel} 操作`}>
-            <button className="icon-button" onClick={onRefresh} title="刷新预览" type="button">
+            <button className="icon-button" onClick={onRefresh} title="刷新" type="button">
               <InlineIcon name="refresh" />
             </button>
-            <button className="icon-button" onClick={onCopy} title="复制解析文本" type="button">
+            <button className="icon-button" onClick={onCopy} title="复制文本" type="button">
               <InlineIcon name="copy" />
-              <span className="sr-only">{copied ? "已复制" : "复制解析文本"}</span>
+              <span className="sr-only">{copied ? "已复制" : "复制文本"}</span>
             </button>
             <button
               className={`icon-button ${expanded ? "icon-button-active" : ""}`}
               onClick={onToggleFocus}
-              title={expanded ? "恢复双栏" : `放大教案 ${slotLabel}`}
+              title={expanded ? "恢复双栏" : `查看教案 ${slotLabel}`}
               type="button"
             >
               <InlineIcon name="maximize" />
@@ -146,41 +132,25 @@ export function LessonCard({
 }
 
 export function VoteBar({
-  decision,
   disabled,
   hasExistingReview,
   isSubmitting,
   showRubric,
-  onDecisionChange,
   onToggleRubric
 }: {
-  decision: VoteDecision;
   disabled?: boolean;
   hasExistingReview: boolean;
   isSubmitting: boolean;
   showRubric: boolean;
-  onDecisionChange: (decision: VoteDecision) => void;
   onToggleRubric: () => void;
 }) {
   return (
-    <section className="vote-bar" aria-label="教案偏好评价">
-      <div className="vote-button-group">
-        {voteOptions.map((option) => (
-          <button
-            className={`vote-button ${decision === option.value ? "vote-button-active" : ""}`}
-            disabled={disabled || isSubmitting}
-            key={option.value}
-            onClick={() => onDecisionChange(option.value)}
-            type="button"
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+    <section className="vote-bar review-action-bar" aria-label="专业评分操作">
+      <p className="review-action-note">专业维度评分</p>
 
       <div className="vote-bar-actions">
         <button className="secondary-button" disabled={disabled || isSubmitting} onClick={onToggleRubric} type="button">
-          {showRubric ? "收起评分" : "专业评分"}
+          {showRubric ? "收起评分" : "展开评分"}
         </button>
         <button className="primary-button vote-submit-button" disabled={disabled || isSubmitting} type="submit">
           {isSubmitting ? "提交中..." : hasExistingReview ? "更新评价" : "提交评价"}

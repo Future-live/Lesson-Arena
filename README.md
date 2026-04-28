@@ -54,6 +54,22 @@ npm run dev
 
 ## Docker 部署
 
+一键启动完整系统：
+
+```bash
+./start.sh
+```
+
+常用管理命令：
+
+```bash
+./start.sh status
+./start.sh logs
+./start.sh stop
+```
+
+如果希望手动使用 Docker Compose，也可以运行：
+
 ```bash
 cp .env.example .env
 docker compose up --build

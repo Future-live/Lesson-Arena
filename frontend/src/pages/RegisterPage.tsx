@@ -72,9 +72,9 @@ export function RegisterPage() {
   return (
     <div className="auth-page">
       <section className="auth-hero">
-        <p className="eyebrow">Teaching Community Onboarding</p>
-        <h1>创建一个可参与上传与评价的教师账号</h1>
-        <p>注册后即可提交两份教案、浏览他人批次，并按统一评价维度完成互评。</p>
+        <p className="eyebrow">用户注册</p>
+        <h1>教师账号注册</h1>
+        <p>请填写账号信息完成注册。</p>
       </section>
 
       <form className="auth-card register-card" onSubmit={handleSubmit}>

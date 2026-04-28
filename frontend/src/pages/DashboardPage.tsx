@@ -37,11 +37,9 @@ export function DashboardPage() {
     <div className="dashboard-space">
       <section className="hero-panel">
         <div>
-          <p className="eyebrow">System Overview</p>
-          <h2>围绕“上传两份教案并由全员评价”的完整教研闭环</h2>
-          <p>
-            仪表盘会同时追踪上传进度、待评任务、均分走势和高分教案，帮助你把日常教研从“资料散落”拉回到可管理的系统流程。
-          </p>
+          <p className="eyebrow">工作台</p>
+          <h2>教案评价管理</h2>
+          <p>当前账号的教案批次、评价任务与评分数据。</p>
         </div>
         <div className="hero-score">
           <span>我的上传均分</span>
@@ -50,17 +48,17 @@ export function DashboardPage() {
       </section>
 
       <section className="stats-grid">
-        <StatCard label="总批次数" value={overview?.total_batches ?? 0} helper="系统中所有双教案批次" />
-        <StatCard label="可评价批次" value={overview?.ready_batches ?? 0} helper="解析完成并开放互评" />
-        <StatCard label="待我评价" value={overview?.pending_review_count ?? 0} helper="尚未完成的互评任务" />
-        <StatCard label="我的上传" value={overview?.my_upload_count ?? 0} helper="本人提交的教案组数量" />
+        <StatCard label="总批次数" value={overview?.total_batches ?? 0} helper="当前教案批次数量" />
+        <StatCard label="可评价批次" value={overview?.ready_batches ?? 0} helper="已开放评价的批次" />
+        <StatCard label="待我评价" value={overview?.pending_review_count ?? 0} helper="当前账号待处理任务" />
+        <StatCard label="我的上传" value={overview?.my_upload_count ?? 0} helper="本人提交的批次数量" />
       </section>
 
       <section className="dashboard-columns">
         <div className="panel-card">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Pending</p>
+              <p className="eyebrow">待评价</p>
               <h3>待我评价的教案组</h3>
             </div>
             <span className="muted-label">{pendingResults.length} 个批次</span>
@@ -69,7 +67,7 @@ export function DashboardPage() {
             {pendingResults.length ? (
               pendingResults.map((item) => <BatchCard key={item.id} batch={item} />)
             ) : (
-              <p className="empty-state">当前没有待你评价的教案组，可以先上传新的双教案批次。</p>
+              <p className="empty-state">暂无待评价教案组。</p>
             )}
           </div>
         </div>
@@ -77,7 +75,7 @@ export function DashboardPage() {
         <div className="panel-card">
           <div className="section-head">
             <div>
-              <p className="eyebrow">My Uploads</p>
+              <p className="eyebrow">我的上传</p>
               <h3>我的上传批次</h3>
             </div>
           </div>
@@ -85,7 +83,7 @@ export function DashboardPage() {
             {myUploads.length ? (
               myUploads.map((item) => <BatchCard key={item.id} batch={item} />)
             ) : (
-              <p className="empty-state">你还没有上传过批次，现在可以直接创建第一组双教案。</p>
+              <p className="empty-state">暂无上传批次。</p>
             )}
           </div>
         </div>
@@ -95,7 +93,7 @@ export function DashboardPage() {
         <div className="panel-card">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Recent</p>
+              <p className="eyebrow">最近批次</p>
               <h3>{canViewGlobalRankings ? "最近开放评价的批次" : "我的最近上传"}</h3>
             </div>
             {!canViewGlobalRankings ? (
@@ -118,7 +116,7 @@ export function DashboardPage() {
         <div className="panel-card">
           <div className="section-head">
             <div>
-              <p className="eyebrow">Top Rated</p>
+              <p className="eyebrow">评分排行</p>
               <h3>{canViewGlobalRankings ? "高分批次" : "我的高评分批次"}</h3>
             </div>
           </div>

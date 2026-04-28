@@ -22,7 +22,7 @@ export function BatchCard({ batch }: { batch: BatchListItem }) {
         </span>
       </div>
       <h3>{batch.title}</h3>
-      <p className="card-description">{batch.cover_summary || "该批次未填写补充说明，评价时请重点结合原文质量与教学设计判断。"}</p>
+      <p className="card-description">{batch.cover_summary || "暂无批次说明。"}</p>
       <div className="metric-row">
         {showSummary ? (
           <>
@@ -37,8 +37,8 @@ export function BatchCard({ batch }: { batch: BatchListItem }) {
           </>
         ) : (
           <div className="metric-callout">
-            <strong>匿名互评进行中</strong>
-            <span>他人评分与汇总对当前用户暂不展示</span>
+            <strong>评分汇总暂不显示</strong>
+            <span>当前账号暂无查看权限</span>
           </div>
         )}
         <div>
@@ -52,7 +52,7 @@ export function BatchCard({ batch }: { batch: BatchListItem }) {
           <strong>{batch.uploader.display_name}</strong>
         </div>
         <Link className="primary-link" to={`/batches/${batch.id}`}>
-          查看详情
+          测评
         </Link>
       </footer>
     </article>

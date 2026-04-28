@@ -100,16 +100,19 @@ export function UploadPage() {
     <div className="panel-card">
       <div className="section-head">
         <div>
-          <p className="eyebrow">Upload Pair</p>
-          <h2>创建一组双教案批次</h2>
+          <p className="eyebrow">新建批次</p>
+          <h2>上传教案批次</h2>
         </div>
-        <p className="muted-label">系统会在上传后自动解析文档，并向全体其他用户开放评价。</p>
+        <p className="muted-label">每个批次需提交 2 份教案文件。</p>
       </div>
 
       <form className="upload-form" onSubmit={handleSubmit}>
         <div className="grid-two">
           <label>
-            批次标题
+            <span className="field-title">
+              批次标题
+              <span className="required-mark">必填</span>
+            </span>
             <input
               value={form.title}
               onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
@@ -118,7 +121,10 @@ export function UploadPage() {
             />
           </label>
           <label>
-            学科
+            <span className="field-title">
+              学科
+              <span className="required-mark">必填</span>
+            </span>
             <input
               value={form.subject}
               onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))}
@@ -130,7 +136,10 @@ export function UploadPage() {
 
         <div className="grid-two">
           <label>
-            适用学段/年级
+            <span className="field-title">
+              适用学段/年级
+              <span className="required-mark">必填</span>
+            </span>
             <input
               value={form.grade_level}
               onChange={(event) => setForm((current) => ({ ...current, grade_level: event.target.value }))}
@@ -139,7 +148,10 @@ export function UploadPage() {
             />
           </label>
           <label>
-            学年
+            <span className="field-title">
+              学年
+              <span className="optional-mark">选填</span>
+            </span>
             <input
               value={form.academic_year}
               onChange={(event) => setForm((current) => ({ ...current, academic_year: event.target.value }))}
@@ -150,7 +162,10 @@ export function UploadPage() {
 
         <div className="grid-two">
           <label>
-            教学主题
+            <span className="field-title">
+              教学主题
+              <span className="optional-mark">选填</span>
+            </span>
             <input
               value={form.teaching_theme}
               onChange={(event) => setForm((current) => ({ ...current, teaching_theme: event.target.value }))}
@@ -158,7 +173,10 @@ export function UploadPage() {
             />
           </label>
           <label>
-            评价截止日期
+            <span className="field-title">
+              评价截止日期
+              <span className="optional-mark">选填</span>
+            </span>
             <input
               type="date"
               value={form.review_deadline}
@@ -168,19 +186,25 @@ export function UploadPage() {
         </div>
 
         <label>
-          批次说明
+          <span className="field-title">
+            批次说明
+            <span className="optional-mark">选填</span>
+          </span>
           <textarea
             rows={4}
             value={form.cover_summary}
             onChange={(event) => setForm((current) => ({ ...current, cover_summary: event.target.value }))}
-            placeholder="可补充版本差异、设计意图、适用场景等，帮助评价者更准确理解。"
+            placeholder="可填写版本差异、设计意图或适用场景。"
           />
         </label>
 
         <div className="grid-two">
           {[0, 1].map((index) => (
             <label className="file-dropzone" key={index}>
-              <span className="muted-label">教案 {index === 0 ? "A" : "B"}</span>
+              <span className="field-title">
+                <span className="muted-label">教案 {index === 0 ? "A" : "B"}</span>
+                <span className="required-mark">必填</span>
+              </span>
               <strong>{documents[index] ? documents[index]?.name : "选择文件"}</strong>
               <p>支持 `.doc`、`.docx`、`.pdf`、`.txt`、`.md`、`.markdown`，单文件默认上限 20MB</p>
               <input
@@ -196,7 +220,7 @@ export function UploadPage() {
         {error ? <p className="form-error">{error}</p> : null}
 
         <button className="primary-button" disabled={mutation.isPending} type="submit">
-          {mutation.isPending ? "正在创建批次..." : "提交并开始解析"}
+          {mutation.isPending ? "正在提交..." : "提交批次"}
         </button>
       </form>
     </div>

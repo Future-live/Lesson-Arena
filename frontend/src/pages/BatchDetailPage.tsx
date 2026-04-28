@@ -3,52 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import { BatchDetail, ReviewDimensionDefinition } from "../api/types";
-import { LessonCard, LessonCardMeta, VoteBar, VoteDecision } from "../components/LessonComparison";
+import { LessonCard, LessonCardMeta, VoteBar } from "../components/LessonComparison";
 
 
 interface ReviewFormState {
-  decision: VoteDecision;
   dimension_scores: Record<string, { score_a: number; score_b: number; comment: string }>;
-}
-
-function inferDecision(comment: string | undefined) {
-  if (!comment) {
-    return "both_good" as const;
-  }
-  if (comment.startsWith("quick_decision:")) {
-    const value = comment.replace("quick_decision:", "").trim();
-    if (value === "a_better" || value === "both_good" || value === "both_bad" || value === "b_better") {
-      return value;
-    }
-  }
-  return "both_good" as const;
-}
-
-function buildRecommendation(decision: VoteDecision) {
-  if (decision === "both_good") {
-    return "strong_recommend";
-  }
-  if (decision === "both_bad") {
-    return "revise";
-  }
-  return "recommend";
-}
-
-function buildComparativeComment(decision: VoteDecision) {
-  return `quick_decision:${decision}`;
-}
-
-function buildOverallComment(decision: VoteDecision) {
-  if (decision === "a_better") {
-    return "本轮快速评审结论为教案 A 更优。";
-  }
-  if (decision === "b_better") {
-    return "本轮快速评审结论为教案 B 更优。";
-  }
-  if (decision === "both_bad") {
-    return "本轮快速评审结论为两份教案均需明显修改。";
-  }
-  return "本轮快速评审结论为两份教案整体都较好。";
 }
 
 const statusText: Record<BatchDetail["status"], string> = {
@@ -64,7 +23,7 @@ export function BatchDetailPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [focusedDocumentId, setFocusedDocumentId] = useState<string | null>(null);
-  const [showRubric, setShowRubric] = useState(false);
+  const [showRubric, setShowRubric] = useState(true);
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null);
 
   const batchQuery = useQuery({
@@ -104,7 +63,6 @@ export function BatchDetailPage() {
     );
 
     return {
-      decision: inferDecision(existingReview?.comparative_comment),
       dimension_scores: dimensionMap
     };
   }, [batchQuery.data?.current_user_review, dimensionsQuery.data]);
@@ -122,9 +80,9 @@ export function BatchDetailPage() {
   const submitReview = useMutation({
     mutationFn: async () => {
       const payload = {
-        recommendation: buildRecommendation(form.decision),
-        overall_comment: buildOverallComment(form.decision),
-        comparative_comment: buildComparativeComment(form.decision),
+        recommendation: "recommend",
+        overall_comment: "本次评价仅提交八个专业维度评分。",
+        comparative_comment: "",
         dimension_scores: (dimensionsQuery.data ?? []).map((dimension) => ({
           dimension_key: dimension.key,
           score_a: form.dimension_scores[dimension.key]?.score_a ?? 8,
@@ -195,27 +153,19 @@ export function BatchDetailPage() {
       : focusedDocument?.slot_number === 2
         ? "lesson-card-grid-right-expanded"
         : "";
-  const totalScoreA = (dimensionsQuery.data ?? []).reduce(
-    (sum, dimension) => sum + (form.dimension_scores[dimension.key]?.score_a ?? 8) * dimension.weight,
-    0
-  );
-  const totalScoreB = (dimensionsQuery.data ?? []).reduce(
-    (sum, dimension) => sum + (form.dimension_scores[dimension.key]?.score_b ?? 8) * dimension.weight,
-    0
-  );
 
   return (
     <div className="detail-space arena-page">
       <section className="battle-summary">
         <div>
-          <p className="eyebrow">Active Comparison</p>
+          <p className="eyebrow">评价详情</p>
           <h2>{batch.title}</h2>
           <p className="battle-summary-meta">
             {batch.subject} · {batch.grade_level}
             {batch.teaching_theme ? ` · ${batch.teaching_theme}` : ""}
           </p>
           <p className="battle-summary-note">
-            {batch.cover_summary || "请直接对比两份教案原始版式、结构组织与教学设计质量。"}
+            {batch.cover_summary || "暂无批次说明。"}
           </p>
         </div>
         <div className="battle-summary-actions">
@@ -234,9 +184,9 @@ export function BatchDetailPage() {
         <section className="lesson-comparison-section">
           <div className="lesson-section-head">
             <div>
-              <p className="eyebrow">Arena Stage</p>
-              <h3>双教案对战区</h3>
-              <p>保留原文版式阅读，点击放大按钮可让其中一份教案扩展阅读空间。</p>
+              <p className="eyebrow">教案内容</p>
+              <h3>教案原文</h3>
+              <p>教案 A 与教案 B</p>
             </div>
             <div className="view-switcher" aria-label="阅读布局切换">
               <button
@@ -255,7 +205,7 @@ export function BatchDetailPage() {
                   }
                   type="button"
                 >
-                  放大 {document.slot_number === 1 ? "A" : "B"}
+                  查看 {document.slot_number === 1 ? "A" : "B"}
                 </button>
               ))}
             </div>
@@ -291,23 +241,13 @@ export function BatchDetailPage() {
               <section className="panel-card rubric-drawer">
                 <div className="section-head">
                   <div>
-                    <p className="eyebrow">Scoring Rubric</p>
-                    <h3>专业评分维度</h3>
-                    <p className="rubric-helper">分别为教案 A 与教案 B 在 8 个维度上打分，系统会保留两套分数。</p>
+                    <p className="eyebrow">评分维度</p>
+                    <h3>专业维度评分</h3>
+                    <p className="rubric-helper">教案 A、教案 B 分项评分。</p>
                   </div>
                   <button className="secondary-button" onClick={() => setShowRubric(false)} type="button">
                     收起
                   </button>
-                </div>
-                <div className="rubric-score-summary">
-                  <div>
-                    <span>教案 A 综合分</span>
-                    <strong>{totalScoreA.toFixed(2)}</strong>
-                  </div>
-                  <div>
-                    <span>教案 B 综合分</span>
-                    <strong>{totalScoreB.toFixed(2)}</strong>
-                  </div>
                 </div>
                 <div className="rubric-grid">
                   {(dimensionsQuery.data ?? []).map((dimension) => (
@@ -378,19 +318,17 @@ export function BatchDetailPage() {
             {error ? <p className="form-error">{error}</p> : null}
             <div className="arena-footbar">
               {!batch.can_view_review_summary ? (
-                <p className="arena-footnote">当前为盲评模式，你不会看到他人汇总结论。</p>
+                <p className="arena-footnote">当前为盲评模式，你不会看到他人的汇总评分。</p>
               ) : (
                 <button className="arena-summary-link" onClick={() => navigate("/")} type="button">
-                  查看数据看板中的汇总信息
+                  查看评分汇总
                 </button>
               )}
             </div>
 
             <VoteBar
-              decision={form.decision}
               hasExistingReview={Boolean(batch.current_user_review)}
               isSubmitting={submitReview.isPending}
-              onDecisionChange={(decision) => setForm((current) => ({ ...current, decision }))}
               onToggleRubric={() => setShowRubric((current) => !current)}
               showRubric={showRubric}
             />
@@ -398,7 +336,7 @@ export function BatchDetailPage() {
         ) : (
           <section className="panel-card">
             <h3>当前不可评价</h3>
-            <p>该批次仍在解析或解析失败，待文档可读后再开放评价。</p>
+            <p>该批次尚未开放评价。</p>
           </section>
         )}
       </form>

@@ -32,11 +32,9 @@ export function LoginPage() {
   return (
     <div className="auth-page">
       <section className="auth-hero">
-        <p className="eyebrow">Deployable Teaching Workflow</p>
-        <h1>把教案上传、展示、互评和汇总真正跑起来</h1>
-        <p>
-          系统围绕“双教案成组上传 + 全员多维评价”设计，适合校内教研、区域评审和日常备课优化。
-        </p>
+        <p className="eyebrow">用户登录</p>
+        <h1>教案评价系统</h1>
+        <p>请使用教师账号登录。</p>
       </section>
 
       <form className="auth-card" onSubmit={handleSubmit}>
