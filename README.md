@@ -117,6 +117,7 @@ docker compose up --build
 相关文件：
 
 - `.github/workflows/cloudbase-deploy.yml`
+- `Dockerfile`
 - `cloudbaserc.json`
 - `.env.cloudbase.example`
 - `Dockerfile.cloudbase`

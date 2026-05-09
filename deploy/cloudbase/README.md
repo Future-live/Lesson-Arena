@@ -16,6 +16,7 @@ CloudBase 不是直接运行 `docker-compose.yml` 的云服务器，所以要拆
 
 - `.github/workflows/cloudbase-deploy.yml`：GitHub Actions 部署入口，推送 `main` 或手动触发后部署到腾讯云 CloudBase。
 - `cloudbaserc.json`：CloudBase Framework 配置留档。
+- `Dockerfile`：腾讯云控制台 Git 仓库构建的默认后端 Dockerfile。
 - `Dockerfile.cloudbase`：后端云托管容器镜像构建文件。
 - `.env.cloudbase.example`：CloudBase 生产环境变量模板。
 - `scripts/cloudbase-deploy.sh`：构建前端、上传静态托管、打包并提交后端 CloudRun 服务；GitHub Actions 和本地备用部署共用这个脚本。
