@@ -1,9 +1,18 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def env_path(name: str, default: Path) -> Path:
+    value = os.getenv(name)
+    if not value:
+        return default
+    path = Path(value)
+    return path if path.is_absolute() else BASE_DIR / path
 
 
 def env_bool(name: str, default: bool = False) -> bool:
@@ -16,6 +25,42 @@ def env_bool(name: str, default: bool = False) -> bool:
 def env_list(name: str, default: str = "") -> list[str]:
     value = os.getenv(name, default)
     return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def ensure_mysql_driver() -> None:
+    import pymysql
+
+    pymysql.install_as_MySQLdb()
+
+
+def database_config_from_url(url: str) -> dict:
+    parsed = urlparse(url)
+    scheme = parsed.scheme.split("+", 1)[0].lower()
+
+    if scheme in {"postgres", "postgresql"}:
+        engine = "django.db.backends.postgresql"
+        default_port = "5432"
+    elif scheme in {"mysql", "mariadb"}:
+        ensure_mysql_driver()
+        engine = "django.db.backends.mysql"
+        default_port = "3306"
+    else:
+        raise ValueError(f"Unsupported DATABASE_URL scheme: {parsed.scheme}")
+
+    config = {
+        "ENGINE": engine,
+        "NAME": unquote(parsed.path.lstrip("/")),
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "",
+        "PORT": str(parsed.port or default_port),
+    }
+    if engine == "django.db.backends.mysql":
+        config["OPTIONS"] = {
+            "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
+    return config
 
 
 SECRET_KEY = os.getenv(
@@ -36,6 +81,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = env_list(
     "CORS_ALLOWED_ORIGIN_REGEXES",
     r"^http://127\.0\.0\.1:\d+$,^http://localhost:\d+$",
 )
+CORS_ALLOW_ALL_ORIGINS = env_bool("CORS_ALLOW_ALL_ORIGINS", False)
 CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
@@ -92,18 +138,11 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 if DATABASE_URL:
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": DATABASE_URL.rsplit("/", 1)[-1].split("?", 1)[0],
-            "USER": os.getenv("POSTGRES_USER", "postgres"),
-            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
-            "HOST": os.getenv("POSTGRES_HOST", "db"),
-            "PORT": os.getenv("POSTGRES_PORT", "5432"),
-        }
+        "default": database_config_from_url(DATABASE_URL),
     }
 else:
     DB_ENGINE = os.getenv("DB_ENGINE", "sqlite").lower()
-    if DB_ENGINE == "postgres":
+    if DB_ENGINE in {"postgres", "postgresql"}:
         DATABASES = {
             "default": {
                 "ENGINE": "django.db.backends.postgresql",
@@ -112,6 +151,22 @@ else:
                 "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
                 "HOST": os.getenv("POSTGRES_HOST", "127.0.0.1"),
                 "PORT": os.getenv("POSTGRES_PORT", "5432"),
+            }
+        }
+    elif DB_ENGINE in {"mysql", "mariadb"}:
+        ensure_mysql_driver()
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.mysql",
+                "NAME": os.getenv("MYSQL_DATABASE", os.getenv("MYSQL_DB", "lesson_review")),
+                "USER": os.getenv("MYSQL_USER", "root"),
+                "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),
+                "HOST": os.getenv("MYSQL_HOST", "127.0.0.1"),
+                "PORT": os.getenv("MYSQL_PORT", "3306"),
+                "OPTIONS": {
+                    "charset": "utf8mb4",
+                    "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+                },
             }
         }
     else:
@@ -138,13 +193,24 @@ TIME_ZONE = os.getenv("TIME_ZONE", "Asia/Shanghai")
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATIC_URL = os.getenv("STATIC_URL", "/static/")
+STATIC_ROOT = env_path("STATIC_ROOT", BASE_DIR / "staticfiles")
+SERVE_STATIC_FILES = env_bool("SERVE_STATIC_FILES", False)
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
+MEDIA_ROOT = env_path("MEDIA_ROOT", BASE_DIR / "media")
 SERVE_MEDIA_FILES = env_bool("SERVE_MEDIA_FILES", True)
+MEDIA_STORAGE_BACKEND = os.getenv("MEDIA_STORAGE_BACKEND", "django.core.files.storage.FileSystemStorage")
+
+STORAGES = {
+    "default": {
+        "BACKEND": MEDIA_STORAGE_BACKEND,
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"

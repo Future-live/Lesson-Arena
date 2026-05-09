@@ -3,9 +3,47 @@ set -e
 
 cd /app/backend
 
+if [ -f "/app/backend/.env.cloudbase" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . /app/backend/.env.cloudbase
+  set +a
+fi
+
 python -c "
 import os, time
-if os.getenv('DB_ENGINE', 'sqlite').lower() == 'postgres':
+create_database = os.getenv('MYSQL_CREATE_DATABASE', 'False').lower() in {'1', 'true', 'yes', 'on'}
+if create_database and os.getenv('DB_ENGINE', 'sqlite').lower() in {'mysql', 'mariadb'} and not os.getenv('DATABASE_URL'):
+    import pymysql
+    host = os.getenv('MYSQL_HOST', '127.0.0.1')
+    port = int(os.getenv('MYSQL_PORT', '3306'))
+    user = os.getenv('MYSQL_USER', 'root')
+    password = os.getenv('MYSQL_PASSWORD', '')
+    database = os.getenv('MYSQL_DATABASE', os.getenv('MYSQL_DB', 'lesson_review'))
+    quote = chr(96)
+    database = database.replace(quote, '')
+    for index in range(30):
+        try:
+            connection = pymysql.connect(host=host, port=port, user=user, password=password, connect_timeout=3)
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f'CREATE DATABASE IF NOT EXISTS {quote}{database}{quote} '
+                    'CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
+                )
+            connection.commit()
+            connection.close()
+            print('MySQL database is ready')
+            break
+        except Exception as exc:
+            print(f'Waiting for MySQL ({index + 1}/30): {exc}')
+            time.sleep(2)
+    else:
+        raise SystemExit('MySQL database initialization failed')
+"
+
+python -c "
+import os, time
+if os.getenv('DB_ENGINE', 'sqlite').lower() in {'postgres', 'postgresql', 'mysql', 'mariadb'} or os.getenv('DATABASE_URL'):
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     import django
     django.setup()

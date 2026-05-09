@@ -27,6 +27,28 @@ export const api = axios.create({
   timeout: 15000
 });
 
+export function resolveApiAssetUrl(url?: string | null) {
+  if (!url) {
+    return "";
+  }
+
+  if (url.startsWith("//")) {
+    return `${window.location.protocol}${url}`;
+  }
+
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+
+  const apiBase = new URL(API_BASE_URL, window.location.origin);
+  if (url.startsWith("/")) {
+    return `${apiBase.origin}${url}`;
+  }
+
+  const basePath = apiBase.pathname.endsWith("/") ? apiBase.pathname : `${apiBase.pathname}/`;
+  return new URL(url, `${apiBase.origin}${basePath}`).toString();
+}
+
 export function registerAuthHandlers(handlers: AuthHandlers) {
   authHandlers = handlers;
 }

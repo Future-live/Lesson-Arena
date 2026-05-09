@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+
+import { api, resolveApiAssetUrl } from "../api/client";
 import { LessonPlanDocument } from "../api/types";
 import { InlineIcon } from "./InlineIcon";
 
@@ -10,6 +13,73 @@ export interface LessonCardMeta {
 
 function buildPdfPreviewUrl(url: string) {
   return `${url}#toolbar=1&navpanes=0&view=FitH`;
+}
+
+function PdfPreviewFrame({
+  expanded,
+  title,
+  url
+}: {
+  expanded: boolean;
+  title: string;
+  url: string;
+}) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+    let nextBlobUrl: string | null = null;
+
+    setBlobUrl(null);
+    setIsLoading(true);
+    setHasError(false);
+
+    api
+      .get<Blob>(resolveApiAssetUrl(url), { responseType: "blob", timeout: 60000 })
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+        nextBlobUrl = URL.createObjectURL(response.data);
+        setBlobUrl(nextBlobUrl);
+      })
+      .catch(() => {
+        if (isActive) {
+          setHasError(true);
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+      if (nextBlobUrl) {
+        URL.revokeObjectURL(nextBlobUrl);
+      }
+    };
+  }, [url]);
+
+  if (isLoading) {
+    return <div className="empty-preview lesson-empty-preview">文档预览加载中...</div>;
+  }
+
+  if (hasError || !blobUrl) {
+    return <div className="empty-preview lesson-empty-preview">预览文件加载失败，请下载原文或重新上传文档。</div>;
+  }
+
+  return (
+    <iframe
+      className={`document-frame ${expanded ? "document-frame-expanded" : ""}`}
+      loading="lazy"
+      src={buildPdfPreviewUrl(blobUrl)}
+      title={`${title} 版式预览`}
+    />
+  );
 }
 
 export function DocumentPreview({
@@ -32,14 +102,13 @@ export function DocumentPreview({
   if (document.display_mode === "pdf" && document.preview_url) {
     return (
       <div className="document-preview-shell">
-        <iframe
-          className={`document-frame ${expanded ? "document-frame-expanded" : ""}`}
-          loading="lazy"
-          src={buildPdfPreviewUrl(document.preview_url)}
-          title={`${document.title} 版式预览`}
-        />
+        <PdfPreviewFrame expanded={expanded} title={document.title} url={document.preview_url} />
       </div>
     );
+  }
+
+  if (document.display_mode === "pdf") {
+    return <div className="empty-preview lesson-empty-preview">预览文件不存在，请重新上传文档。</div>;
   }
 
   return (
@@ -71,6 +140,7 @@ export function LessonCard({
 }) {
   const slotLabel = document.slot_number === 1 ? "A" : "B";
   const previewMode = document.display_mode === "pdf" ? "PDF 文档" : "文档内容";
+  const originalFileUrl = resolveApiAssetUrl(document.original_file);
 
   return (
     <article
@@ -111,7 +181,7 @@ export function LessonCard({
             >
               <InlineIcon name="maximize" />
             </button>
-            <a className="icon-button" href={document.original_file} rel="noreferrer" target="_blank" title="下载原文">
+            <a className="icon-button" href={originalFileUrl} rel="noreferrer" target="_blank" title="下载原文">
               <InlineIcon name="download" />
             </a>
           </div>

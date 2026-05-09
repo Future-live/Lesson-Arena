@@ -103,3 +103,42 @@ docker compose up --build
 - 使用独立 PostgreSQL/Redis 服务
 - 将 `ALLOWED_HOSTS`、`CSRF_TRUSTED_ORIGINS` 设置为正式域名
 - 将媒体目录挂载到持久化磁盘或对象存储
+
+## GitHub 部署到腾讯云 CloudBase
+
+本项目已补充腾讯云 CloudBase 适配文件，但 CloudBase 不能直接运行 `docker-compose.yml`，需要拆分部署：
+
+- 前端：CloudBase 静态网站托管
+- 后端：CloudBase 云托管，使用根目录 `Dockerfile.cloudbase`
+- 数据库：CloudBase SQL / CynosDB MySQL，或外部 PostgreSQL
+- 上传文件：CloudBase 默认使用数据库存储上传原文和预览 PDF，避免容器重建后文件丢失；后续也可改接 CFS/对象存储
+- 文档解析：首版建议 `CELERY_TASK_ALWAYS_EAGER=True`，先不单独部署 Redis + Celery Worker
+
+相关文件：
+
+- `.github/workflows/cloudbase-deploy.yml`
+- `cloudbaserc.json`
+- `.env.cloudbase.example`
+- `Dockerfile.cloudbase`
+- `deploy/cloudbase/README.md`
+- `scripts/cloudbase-deploy.sh`
+
+推荐使用 GitHub Actions 部署。先在 GitHub 仓库 `Settings -> Secrets and variables -> Actions` 添加：
+
+- `TCB_ENV_ID`：CloudBase 环境 ID
+- `TCB_SECRET_ID`：腾讯云 API 密钥 SecretId
+- `TCB_SECRET_KEY`：腾讯云 API 密钥 SecretKey
+- `CLOUDBASE_ENV_FILE`：按 `.env.cloudbase.example` 填好的完整生产环境变量内容
+
+之后推送到 `main` 分支，或在 Actions 页面手动运行 `Deploy to Tencent CloudBase` workflow，即可部署前端静态托管和后端云托管。
+
+本地 CLI 部署仍可作为备用路径：
+
+```bash
+cp .env.cloudbase.example .env.cloudbase
+cloudbase login
+./scripts/cloudbase-deploy.sh
+```
+
+CloudBase 静态托管下前端使用 hash 路由，访问地址类似 `https://你的前端域名/#/login`。
+部署脚本默认使用同域 `/api`，并自动给前端域名配置 `/api` 前缀到 CloudRun 服务的路由，因此重建后端服务时通常不需要手动复制 CloudRun 直连域名。

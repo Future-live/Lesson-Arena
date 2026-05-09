@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.lesson_plans.models import LessonPlanBatch, LessonPlanDocument
-from apps.reviews.models import LessonPlanReview
+from apps.reviews.models import LessonPlanReview, LessonPlanReviewFileSnapshot
 from apps.reviews.rubric import REVIEW_DIMENSIONS
 
 
@@ -86,6 +86,15 @@ class ReviewApiTests(APITestCase):
         self.assertEqual(review.total_score, Decimal("8.00"))
         self.assertEqual(self.batch.review_count, 1)
         self.assertEqual(self.batch.average_total_score, Decimal("8.00"))
+
+        snapshot = LessonPlanReviewFileSnapshot.objects.get(review=review)
+        first_dimension_key = REVIEW_DIMENSIONS[0]["key"]
+        self.assertEqual(snapshot.document_a.slot_number, 1)
+        self.assertEqual(snapshot.document_b.slot_number, 2)
+        self.assertEqual(snapshot.original_file_a.name, "lesson-plans/demo/1.txt")
+        self.assertEqual(snapshot.original_file_b.name, "lesson-plans/demo/2.txt")
+        self.assertEqual(snapshot.dimension_scores_a[first_dimension_key]["score"], 7)
+        self.assertEqual(snapshot.dimension_scores_b[first_dimension_key]["score"], 9)
 
     def test_uploader_can_submit_self_review(self):
         self.authenticate_as("uploader_1", "StrongPass123!")

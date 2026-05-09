@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from apps.reviews.models import LessonPlanReview, LessonPlanReviewDimensionScore
+from apps.reviews.models import LessonPlanReview, LessonPlanReviewDimensionScore, LessonPlanReviewFileSnapshot
 from apps.reviews.rubric import DIMENSION_MAP, REVIEW_DIMENSIONS
 from apps.reviews.services import calculate_pair_total_scores
 
@@ -129,5 +129,6 @@ class ReviewUpsertSerializer(serializers.Serializer):
 
         review.total_score_a, review.total_score_b, review.total_score = calculate_pair_total_scores(payload_for_total)
         review.save(update_fields=["total_score", "total_score_a", "total_score_b", "submitted_at", "updated_at"])
+        LessonPlanReviewFileSnapshot.sync_for_review(review)
         batch.refresh_review_summary(save=True)
         return review
