@@ -128,7 +128,7 @@ CloudBase 不是直接运行 `docker-compose.yml` 的云服务器，所以要拆
 如果不用 CLI，也可以在控制台手动做：
 
 1. 静态网站托管：进入 `frontend`，用 `VITE_API_BASE_URL=/api npm run build` 构建，上传 `frontend/dist`。
-2. 云托管：源码目录选项目根目录，Dockerfile 选 `Dockerfile.cloudbase`，服务端口填 `8000`，访问路径填 `/api`。
+2. 云托管：源码目录选项目根目录，Dockerfile 选 `Dockerfile.cloudbase`，服务端口填 `80`，访问路径填 `/api`。
 3. HTTP 访问服务：给前端静态托管域名添加 `/api` 前缀路由，上游资源类型选 `CBR`，上游服务选后端 CloudRun 服务。
 4. SQL 型数据库：创建 MySQL 数据库，把连接信息填到云托管环境变量。
 5. 持久化文件：默认使用 `MEDIA_STORAGE_BACKEND=apps.core.storage.DatabaseMediaStorage` 存入数据库。大文件或高频使用场景再改为对象存储或 CFS。

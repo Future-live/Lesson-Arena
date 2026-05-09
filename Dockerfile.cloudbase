@@ -19,6 +19,6 @@ RUN chmod +x /app/scripts/backend-entrypoint.sh /app/scripts/worker-entrypoint.s
 
 WORKDIR /app/backend
 
-EXPOSE 8000
+EXPOSE 80
 
 CMD ["/bin/sh", "/app/scripts/backend-entrypoint.sh"]
